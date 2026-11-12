@@ -1,0 +1,25 @@
+{
+  "repo": "https://github.com/soueusardi/wos-enhanced",
+  "credits": [
+    {
+      "name": "SM2 Enhanced — JohnSwingMods",
+      "role": {
+        "pt": "Inspiração para a interface e as funcionalidades do launcher.",
+        "en": "Inspiration for the launcher's interface and features."
+      },
+      "url": "https://github.com/JohnSwingMods/sm2-enhanced"
+    },
+    {
+      "name": "uMod — Universal Modding Engine",
+      "role": {
+        "pt": "Tecnologia de modificação e troca de texturas usada pelo launcher.",
+        "en": "Modding and texture replacement technology used by the launcher."
+      },
+      "note": {
+        "pt": "O componente incorporado (d3d9.dll) está sob a GPL v3 ou posterior.",
+        "en": "The bundled component (d3d9.dll) is licensed under the GPL v3 or later."
+      },
+      "url": "https://github.com/mathewwi/texmod"
+    }
+  ]
+}

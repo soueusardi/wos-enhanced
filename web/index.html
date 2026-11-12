@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Web of Shadows Launcher</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ink:#08060a; --panel:#0f0a0d; --line:#3a1a22; --silver:#efe8eb; --dim:#a8939b;
+    --red:#c8102e; --red2:#ff3a52; --ok:#3ddc97; --btn:#1b1116; --btnh:#2a141b; --sel:#3a0f1a;
+  }
+  @font-face{font-family:"WOS UI";src:url(fonts/wos-ui.otf) format("opentype")}
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%}
+  body{background:var(--ink);color:var(--silver);font:15px/1.45 "Segoe UI",system-ui,sans-serif;display:flex;overflow:hidden}
+  aside{width:290px;background:linear-gradient(180deg,#130b0f,#0a0709 60%);border-right:1px solid var(--line);padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+  h1{font:700 20px/1.1 Georgia,"Times New Roman",serif;letter-spacing:.5px}
+  h1.logo{margin:2px -4px 4px}
+  h1.logo img{width:100%;display:block;filter:drop-shadow(0 2px 6px #000a)}
+  h1 small{display:block;font:400 12px "Segoe UI",sans-serif;color:var(--dim);margin-top:3px;letter-spacing:0}
+  h2{font-size:13px;font-weight:600;color:var(--dim);margin-bottom:8px}
+  .status{display:flex;align-items:center;gap:8px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--dim)}
+  .dot.ok{background:var(--ok)} .dot.bad{background:var(--red2)}
+  .path{font-size:12px;color:var(--dim);word-break:break-all;margin-top:4px}
+  button,select{font:inherit;color:var(--silver);background:var(--btn);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
+  button{font-family:"WOS UI","Segoe UI",system-ui,sans-serif;letter-spacing:.4px}
+  button small{font-family:"Segoe UI",system-ui,sans-serif;letter-spacing:0}
+  button:hover,select:hover{border-color:#8a2a3a;background:var(--btnh)}
+  button:focus-visible,select:focus-visible{outline:2px solid var(--red2);outline-offset:2px}
+  select{width:100%}
+  .row{display:flex;gap:8px}
+  #play{flex:none;background:linear-gradient(180deg,#e01a36,#a80c22);border-color:#ff3a52;color:#fff;font-weight:400;font-size:22px;letter-spacing:1px;padding:11px;border-radius:8px;box-shadow:0 0 18px #c8102e55}
+  #play:disabled{opacity:.6;cursor:wait}
+  #play:hover{background:linear-gradient(180deg,#ff3048,#c8102e);border-color:#ff6074}
+  #msg{min-height:18px;font-size:13px;color:var(--dim)}
+  main{flex:1;position:relative;min-width:0;background:var(--ink)}
+  #stage{position:absolute;inset:0;overflow:hidden;
+    background:radial-gradient(ellipse 48% 55% at 58% 44%,rgba(205,22,40,.62),rgba(120,10,22,.32) 48%,transparent 78%),
+               linear-gradient(110deg,#040304 0%,#14070a 16%,#430810 30%,#690b16 55%,#7a0c19 100%)}
+  #stage::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 85% 85% at 55% 50%,transparent 55%,rgba(0,0,0,.55) 100%);pointer-events:none}
+  #venom{position:absolute;inset:0;width:100%;height:100%}
+  main.suitsmode #stage{right:46%}
+  #view{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .hint{position:absolute;left:20px;bottom:16px;font-size:12px;color:var(--dim)}
+  .suits{position:absolute;right:18px;top:18px;width:210px;background:rgba(14,8,11,.82);backdrop-filter:blur(3px);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .suit{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin-bottom:6px}
+  .suit[aria-pressed="true"]{border-color:var(--red2);background:var(--sel)}
+  .sw{width:26px;height:26px;border-radius:50%;flex:none;border:2px solid #0006}
+  .note{font-size:12px;color:var(--dim);margin-top:8px}
+  aside{overflow-y:auto}
+  .sub{font-size:12px;font-weight:600;color:var(--silver);margin:8px 0 1px}
+  .skopt{display:flex;align-items:center;gap:8px;margin:1px 0;cursor:pointer;font-size:13.5px}
+  .skopt input{accent-color:var(--red);width:16px;height:16px;flex:none}
+  .skopt small{color:var(--dim)}
+  .suit{flex-direction:column;align-items:flex-start;gap:1px}
+  .suit small{font-size:11px;color:var(--dim);font-weight:400}
+  .extras{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+  .extras h3{font-size:11px;font-weight:600;color:var(--dim);margin-bottom:6px}
+  .extras .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+  .extras figure{margin:0}
+  .extras img{width:100%;display:block;border-radius:4px;border:1px solid var(--line)}
+  .extras figcaption{font-size:10px;color:var(--dim);margin-top:1px}
+  .mini{margin-left:8px;padding:2px 8px;font-size:11px;font-weight:400;border-radius:4px}
+  .status .mini{margin-left:auto}
+  .h2row{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+  .h2row h2{margin:0}
+  .warn{color:#ffb86b;font-size:12px;margin-top:6px}
+  aside{scrollbar-width:thin}
+  .poses{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+  .poses button{padding:4px 8px;font-size:12px}
+  .poses button[aria-pressed="true"]{border-color:var(--red2);background:var(--sel)}
+  .empty{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);max-width:380px;text-align:center;color:var(--dim)}
+  .empty h3{color:var(--silver);font-size:16px;margin-bottom:8px}
+  .empty p{font-size:13px}
+  #suittoggle{display:none;position:absolute;top:14px;left:27%;transform:translateX(-50%);z-index:5;align-items:center;gap:6px;padding:5px 12px 5px 8px;border-radius:999px;font-size:12px;background:rgba(14,8,11,.85)}
+  main.suitsmode #suittoggle{display:flex}
+  #suittoggle .sw{width:14px;height:14px;border-radius:50%;border:2px solid transparent;opacity:.45}
+  #suittoggle .sw.r{background:#d42a3a}#suittoggle .sw.b{background:#15161c;border-color:#7a6168}
+  #suittoggle[data-suit="0"] .sw.r,#suittoggle[data-suit="1"] .sw.b{opacity:1;border-color:#fff}
+  .posebar{position:absolute;left:18px;bottom:44px;margin:0}
+  .poseseg{display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(14,8,11,.88);border:1px solid var(--line);width:max-content}
+  .poseseg button{position:relative;width:40px;height:40px;padding:0;border-radius:50%;border:0;background:transparent;color:var(--silver);display:flex;align-items:center;justify-content:center}
+  .poseseg button:hover{background:var(--btnh)}
+  .poseseg button[aria-checked="true"]{background:var(--red);color:#fff;box-shadow:0 0 12px #c8102e66}
+  .poseseg svg{width:26px;height:26px;display:block}
+  .poseseg button::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 9px);left:50%;transform:translateX(-50%);background:#151015;border:1px solid var(--line);color:var(--silver);padding:4px 10px;border-radius:7px;white-space:nowrap;font:12px "Segoe UI",system-ui,sans-serif;opacity:0;pointer-events:none;transition:opacity .15s}
+  .poseseg button:hover::after,.poseseg button:focus-visible::after{opacity:1}
+  .sumline{margin:5px 0}.sumline .k{display:block;font-size:11px;color:var(--dim)}.sumline .v{font-size:13.5px}
+  main.suitsmode #view{right:auto;width:54%}
+  main.suitsmode .suits{display:none}
+  main.suitsmode .empty{left:27%}
+  #suitsview{position:absolute;top:0;bottom:0;right:0;width:46%;background:rgba(11,7,9,.96);border-left:1px solid var(--line);padding:16px 18px;overflow-y:auto}
+  .sv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .sv-head h2{font-size:18px;color:var(--silver);margin:0}
+  #svmsg{font-size:12px;color:var(--dim);min-height:16px;margin:4px 0 10px}
+  .tgroup{margin-bottom:16px}
+  .tgroup h3{font-size:12px;font-weight:600;color:var(--dim);margin:0 0 7px}
+  .tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .tgrid.wide{grid-template-columns:repeat(2,1fr)}
+  .tile{position:relative;overflow:hidden;border-radius:10px;background:#170d12;border:2px solid var(--line);cursor:pointer;display:flex;flex-direction:column}
+  .tile:hover{border-color:var(--dim)}
+  .tile[aria-pressed="true"]{border-color:var(--red2);background:var(--sel)}
+  .tile.locked{opacity:.38;cursor:not-allowed}
+  .tile .ph{aspect-ratio:200/260;background:#0c0709;display:flex;align-items:center;justify-content:center;gap:2px}
+  .tgrid.wide .tile .ph{aspect-ratio:400/260}
+  .tile .ph img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+  .tile .ph.multi img{max-width:calc(50% - 1px)}
+  .tile .prep{position:absolute;right:6px;bottom:30px;width:14px;height:14px;border-width:2px}
+  .tile .ph .none{color:var(--dim);font-size:22px}
+  .tile .nm{font-size:12px;padding:6px 8px;color:var(--silver);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tile .badge{position:absolute;left:6px;top:6px;font-size:10px;background:var(--red);color:#fff;border-radius:4px;padding:1px 5px}
+  .tile .x{position:absolute;top:4px;right:4px;padding:0 6px;font-size:14px;line-height:20px;border-radius:50%;display:none;background:#000b;border-color:#fff3}
+  .tile:hover .x,.tile:focus-within .x{display:block}
+  .spin{width:22px;height:22px;border:3px solid #ffffff22;border-top-color:var(--red2);border-radius:50%;animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .dropzone{position:fixed;inset:0;z-index:50;background:rgba(8,5,7,.88);border:3px dashed var(--red2);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--silver);pointer-events:none}
+  .linkbtn{margin-top:10px;padding:6px 10px;font-size:13px}
+
+  .nav{display:flex;flex-direction:column;gap:6px}
+  .nav button{text-align:left;padding:9px 12px;font-size:15px}
+  .grow{flex:1}
+  .nav button[aria-pressed="true"],.tabs button[aria-selected="true"]{border-color:var(--red2);background:var(--sel)}
+  .opts{position:absolute;inset:0;background:var(--ink);padding:24px 28px;overflow:auto}
+  [hidden]{display:none !important}
+  .tabs{display:flex;gap:6px;margin-bottom:18px}
+  .grid{display:grid;grid-template-columns:260px 220px;gap:10px 16px;align-items:center;max-width:560px}
+  .grid label{color:var(--silver)}
+  .key{text-align:center}
+  .key.wait{border-color:var(--red2);color:var(--red2)}
+  .chk{display:flex;align-items:center;gap:10px;margin:10px 0}
+  .chk input{width:18px;height:18px;accent-color:var(--red)}
+  .sect{font-size:13px;color:var(--silver);margin:18px 0 8px}
+  #tab-keys .sect:first-child,#padbody .sect:first-child{margin-top:4px}
+  .padstat{font-size:13px;color:var(--dim);margin:2px 0 6px}
+  .padstat.on{color:#7ee0a4}
+  .key.fixed{opacity:.6;cursor:default}
+  .about{max-width:860px;padding-bottom:10px}
+  .ab-head{margin-bottom:4px}
+  .ab-title{font-size:24px;font-weight:600;color:var(--silver);margin:0;letter-spacing:.3px}
+  .ab-ver{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--dim)}
+  .ab-badge{background:var(--red);color:#fff;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600}
+  .ab-lead{font-size:14px;color:var(--silver);max-width:760px;margin:12px 0 14px}
+  .ab-feats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+  .ab-feats div{border:1px solid var(--line);border-left:3px solid var(--red);border-radius:8px;padding:8px 10px;background:#140b10}
+  .ab-feats b{display:block;font-size:13px;color:var(--silver);margin-bottom:2px}
+  .ab-feats span{font-size:12px;color:var(--dim)}
+  .ab-grid,.ab-credits{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .ab-card{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#120a0e}
+  .ab-card h3,.ab-h,.ab-legal h3{font-size:11.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--red2);margin:0 0 7px}
+  .ab-h{margin:16px 0 8px}
+  .ab-card p{font-size:13px;color:var(--silver);margin:0}
+  .ab-list{margin:0;padding-left:17px;font-size:13px;color:var(--silver)}
+  .ab-list li{margin:2px 0}
+  .ab-card p.ab-note,.ab-note{font-size:12px;color:var(--dim);margin-top:7px}
+  .ab-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .ab-btns .mini,.cred .mini{margin:0}
+  .cred b{font-size:13.5px;color:var(--silver)}
+  .cred p{font-size:12.5px;color:var(--dim);margin:3px 0 8px}
+  .cred p.ab-note{margin-top:-4px}
+  .ab-legal{margin-top:16px;padding-top:10px;border-top:1px solid var(--line)}
+  .ab-legal ul{margin:0;padding-left:17px;font-size:11.5px;color:var(--dim)}
+  .ab-legal li{margin:2px 0}
+  .modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.66);display:flex;align-items:center;justify-content:center}
+  .modal[hidden]{display:none}
+  .modal-box{width:min(820px,92vw);height:min(80vh,720px);background:#0f0a0d;border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;box-shadow:0 20px 60px #000c}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .modal-head h3{font-size:14px;margin:0;color:var(--silver)}
+  #lictext{flex:1;overflow:auto;margin:0;padding:12px 14px;font:12px/1.5 Consolas,"Cascadia Mono",monospace;color:#d8cfd3;white-space:pre-wrap}
+  .info h3{font-size:13px;color:var(--silver);margin:20px 0 6px}
+  .info h3:first-child{margin-top:0}
+  .info p{color:var(--silver);font-size:14px;max-width:640px;margin:6px 0}
+  .info .item{margin:8px 0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;max-width:640px}
+  .info .sm{font-size:12px;color:var(--dim);margin-top:2px}
+  .info .lic{color:var(--dim);font-size:12px}
+  .info .item .mini{margin:6px 0 0 0}
+  .langrow{display:flex;align-items:center;gap:10px;max-width:520px}
+  .langrow select{width:auto;min-width:200px}
+  .bar{display:flex;gap:10px;margin-top:22px;align-items:center}
+  .bar #save{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+</style>
+<script>
+function wosErr(m){var d=document.createElement('div');d.style.cssText='position:fixed;left:0;right:0;bottom:0;background:#7a0019;color:#fff;padding:8px 12px;font:12px monospace;z-index:99999';d.textContent='Erro: '+m;(document.body||document.documentElement).appendChild(d);}
+window.onerror=function(m,s,l){wosErr(m+' (linha '+l+')');};
+window.addEventListener('unhandledrejection',function(e){wosErr(String(e.reason));});
+</script>
+</head>
+<body>
+<div class="dropzone" id="dropzone" hidden data-i18n="drop_overlay">Solte o arquivo .tpf aqui</div>
+<aside>
+  <h1 class="logo"><img src="img/logo.png" alt="Spider-Man: Web of Shadows Enhanced"></h1>
+
+  <nav class="nav">
+    <button id="nav-play" aria-pressed="true" data-i18n="nav_play">Jogar</button>
+    <button id="nav-suits" aria-pressed="false" data-i18n="nav_suits">Trajes</button>
+  </nav>
+
+  <section>
+    <div class="status"><span class="dot" id="dot"></span><span id="stxt" data-i18n="checking">Verificando…</span><button class="mini" id="pick" data-i18n="pick_folder">Mudar pasta</button></div>
+    <div class="path" id="gpath"></div>
+    <div class="warn" id="umodstat" hidden></div>
+  </section>
+
+  <div class="grow"></div>
+  <nav class="nav"><button id="nav-opt" aria-pressed="false" data-i18n="nav_opt">Opções</button></nav>
+  <div id="msg" role="status"></div>
+  <button id="play" data-i18n="play_btn">Jogar</button>
+</aside>
+
+<main>
+  <div id="stage"><canvas id="venom"></canvas></div>
+  <canvas id="view"></canvas>
+  <div class="suits">
+    <h2 id="suithead">Preview</h2>
+    <div id="suitlist"></div>
+    <p class="note" id="suitnote"></p>
+    <div class="extras" id="extras" hidden></div>
+  </div>
+  <button id="suittoggle" title=""><span class="sw r"></span><span class="sw b"></span><span id="suittoggle-l"></span></button>
+  <div class="posebar"><div class="poseseg" id="poses" role="radiogroup"></div></div>
+  <section id="suitsview" hidden>
+    <div class="sv-head"><h2 data-i18n="suits_title">Trajes</h2><button id="addskin" data-i18n="add_skin">Adicionar skin</button></div>
+    <p class="note" data-i18n="drop_hint"></p>
+    <div id="svmsg" role="status"></div>
+    <div id="tiles"></div>
+  </section>
+  <div class="empty" id="emptymodel" hidden><h3 data-i18n="empty_title"></h3><p id="emptytext"></p></div>
+  <div class="hint" data-i18n="hint">Arraste para girar · Role para aproximar</div>
+  <section class="opts" id="options" hidden>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="keys" aria-selected="true" data-i18n="tab_keys">Controles (Teclado)</button>
+      <button role="tab" data-tab="pad" aria-selected="false" data-i18n="tab_pad">Controles (Gamepad)</button>
+      <button role="tab" data-tab="vid" aria-selected="false" data-i18n="tab_vid">Vídeo</button>
+      <button role="tab" data-tab="launcher" aria-selected="false" data-i18n="tab_launcher">Launcher</button>
+      <button role="tab" data-tab="about" aria-selected="false" data-i18n="tab_about">Sobre</button>
+    </div>
+    <div id="tab-keys">
+      <h3 class="sect" data-i18n="tab_mov">Movimento</h3><div id="tab-mov" class="grid"></div>
+      <h3 class="sect" data-i18n="tab_com">Combate</h3><div id="tab-com" class="grid"></div>
+    </div>
+    <div id="tab-pad" hidden>
+      <p id="padstat" class="padstat"></p>
+      <div id="padbody" hidden>
+        <h3 class="sect" data-i18n="tab_mov">Movimento</h3><div id="pad-mov" class="grid"></div>
+        <h3 class="sect" data-i18n="tab_com">Combate</h3><div id="pad-com" class="grid"></div>
+        <p class="sm" data-i18n="pad_note"></p>
+      </div>
+    </div>
+    <div id="tab-vid" hidden>
+      <div class="grid"><label for="res" data-i18n="res">Resolução</label><select id="res"></select></div>
+      <div id="checks"></div>
+    </div>
+    <div id="tab-launcher" class="info" hidden>
+      <h3 data-i18n="lang_title"></h3>
+      <div class="langrow"><label for="lang" data-i18n="lang_label"></label>
+        <select id="lang"><option value="pt">Português (Brasil)</option><option value="en">English</option></select></div>
+      <h3 data-i18n="game_title"></h3>
+      <div style="margin:6px 0 10px"><button id="openskins" data-i18n="open_skins_adv"></button></div>
+      <label class="chk"><input type="checkbox" id="skipintro"><span data-i18n="skip_intro"></span></label>
+      <p class="sm" data-i18n="skip_intro_note"></p>
+      <label class="chk"><input type="checkbox" id="stable60"><span data-i18n="stable60"></span></label>
+      <p class="sm" data-i18n="stable60_note"></p>
+    </div>
+    <div id="tab-about" class="about" hidden>
+      <header class="ab-head">
+        <h2 class="ab-title">Web of Shadows Launcher</h2>
+        <div class="ab-ver"><span class="ab-badge" id="appver"></span><span data-i18n="ab_first"></span></div>
+      </header>
+      <p class="ab-lead" data-i18n="ab_lead"></p>
+      <div class="ab-feats">
+        <div><b data-i18n="ab_f1_t"></b><span data-i18n="ab_f1"></span></div>
+        <div><b data-i18n="ab_f2_t"></b><span data-i18n="ab_f2"></span></div>
+        <div><b data-i18n="ab_f3_t"></b><span data-i18n="ab_f3"></span></div>
+      </div>
+      <div class="ab-grid">
+        <section class="ab-card">
+          <h3 data-i18n="ab_req_title"></h3>
+          <ul class="ab-list"><li data-i18n="ab_req1"></li><li data-i18n="ab_req2"></li><li data-i18n="ab_req3"></li></ul>
+          <p class="ab-note" data-i18n="ab_req_note"></p>
+        </section>
+        <section class="ab-card">
+          <h3 data-i18n="ab_lic_title"></h3>
+          <p data-i18n="ab_lic1"></p>
+          <p class="ab-note" data-i18n="ab_lic2"></p>
+          <div class="ab-btns">
+            <button class="mini" id="lic-launcher" data-i18n="ab_lic_launcher_btn"></button>
+            <button class="mini" id="lic-third" data-i18n="ab_lic_third_btn"></button>
+            <button class="mini" id="repobtn" hidden data-i18n="ab_source"></button>
+          </div>
+        </section>
+      </div>
+      <h3 class="ab-h" data-i18n="ab_cred_title"></h3>
+      <div class="ab-credits" id="creditslist"></div>
+      <section class="ab-legal">
+        <h3 data-i18n="ab_legal_title"></h3>
+        <ul><li data-i18n="ab_legal1"></li><li data-i18n="ab_legal2"></li><li data-i18n="ab_legal3"></li><li data-i18n="ab_legal4"></li><li data-i18n="ab_legal5"></li></ul>
+      </section>
+    </div>
+    <div class="bar" id="bar"><button id="save" data-i18n="save">Salvar</button><button id="defs" data-i18n="defaults">Restaurar padrão</button><span id="omsg" role="status" style="color:var(--dim);font-size:13px"></span></div>
+  </section>
+</main>
+<div id="licview" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="lictitle">
+  <div class="modal-box">
+    <div class="modal-head"><h3 id="lictitle"></h3><button class="mini" id="licclose" data-i18n="close"></button></div>
+    <pre id="lictext"></pre>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="vendor/OBJLoader.js"></script>
+<script src="pose.js"></script>
+<script>
+/* ---------- Launcher ---------- */
+const $ = id => document.getElementById(id);
+let api = null, LANG = 'pt', LAST = null, LASTOPT = null;
+function t(key, vars){
+  let s = (I18N[LANG] && I18N[LANG][key]) || I18N.pt[key] || key;
+  if(vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+  return s;
+}
+function applyI18n(){
+  document.documentElement.lang = LANG === 'en' ? 'en' : 'pt-BR';
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  showModelStatus(LAST_GA);
+}
+
+function render(s){
+  LAST = s;
+  $('dot').className = 'dot ' + (s.found ? 'ok' : 'bad');
+  $('stxt').removeAttribute('data-i18n');
+  $('stxt').textContent = s.found ? t('game_found') : t('game_notfound');
+  $('gpath').textContent = s.game_dir;
+  $('umodstat').textContent = s.umod ? '' : t('umod_missing'); $('umodstat').hidden = !!s.umod;
+  $('skipintro').checked = s.skip_intro !== false;
+  $('stable60').checked = s.cpu_cores > 0;
+}
+function say(t){ $('msg').textContent = t; }
+function watchMsg(max){ let n = 0; const iv = setInterval(async () => { const m = await api.get_msg(); say(m.msg); if(++n > max) clearInterval(iv); }, 700); }
+
+let started = false;
+async function init(){
+  if(started || !(window.pywebview && window.pywebview.api && window.pywebview.api.get_state)) return;
+  started = true; api = window.pywebview.api;
+  try { const st = await api.get_state(); LANG = st.lang || 'pt'; POSE_NOW = st.pose === 'hanging' ? 'hanging' : 'crossed'; $('lang').value = LANG; applyI18n(); renderPoses(); render(st); loadSkins(); initModel(); } catch(e){ wosErr('get_state falhou: ' + e); }
+}
+window.addEventListener('pywebviewready', init);
+const poll = setInterval(() => { init(); if(started) clearInterval(poll); }, 300);
+setTimeout(() => { if(!started) wosErr('Sem conexão com o Python. api: ' + (window.pywebview && window.pywebview.api ? Object.keys(window.pywebview.api).join(',') || '(vazia)' : 'não existe')); }, 6000);
+$('pick').onclick = async () => { if(api){ render(await api.choose_folder()); initModel(); } };
+let PLAY_BUSY = false;
+$('play').onclick = async () => {
+  if(!api){ say(t('open_from_launcher')); return; }
+  if(PLAY_BUSY) return;
+  PLAY_BUSY = true; $('play').disabled = true; say(t('opening'));
+  let r;
+  try { r = await api.play(); } finally { PLAY_BUSY = false; $('play').disabled = false; }
+  say(r.msg);
+  if(r.ok){ let n = 0; const iv = setInterval(async () => { const m = await api.get_msg(); say(m.msg); if(++n > 130) clearInterval(iv); }, 700); }
+};
+
+/* ---------- Visualizador 3D (boneco de teste) ---------- */
+const canvas = $('view');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+camera.position.set(0, 1.1, 4.4);
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.target.set(0, 0.97, 0);
+controls.enablePan = false; controls.minDistance = 2; controls.maxDistance = 9;
+controls.autoRotate = true; controls.autoRotateSpeed = 1.2;
+let idleTimer = null;   // ao mexer no modelo o giro para; depois de alguns segundos parado, volta devagar
+controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(idleTimer); });
+controls.addEventListener('end', () => { clearTimeout(idleTimer); idleTimer = setTimeout(() => { controls.autoRotate = true; }, 4000); });
+controls.update();
+
+scene.add(new THREE.HemisphereLight(0xbcc8ff, 0x201830, 0.9));
+const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(3,5,4); scene.add(key);
+const rim = new THREE.DirectionalLight(0xdfe8ff, 0.75); rim.position.set(-4,2.5,-3); scene.add(rim);
+const rim2 = new THREE.DirectionalLight(0xffc8cc, 0.55); rim2.position.set(4,1.5,-3.5); scene.add(rim2);
+
+/* ---------- Modelo real do jogo + texturas da skin (cor + relevo) ---------- */
+const SUITNAMES = ['Clássico', 'Negro'];
+let ORIG = null, ORIGN = null, MESHMATS = null, PREV = {suits:{}, extras:{}}, activeSuit = 0, prevKey = '', applyToken = 0;
+
+function loadTex(uri, isColor){
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => { const tx = new THREE.Texture(img); if(isColor) tx.encoding = THREE.sRGBEncoding; tx.anisotropy = 8; tx.needsUpdate = true; res(tx); };
+    img.src = uri;
+  });
+}
+let MODEL = null, MESH = null, RIG = null, POSE_NOW = 'crossed';
+function frameModel(){
+  if(!MODEL) return;
+  const bb = new THREE.Box3().setFromObject(MODEL), c = bb.getCenter(new THREE.Vector3()), sz = bb.getSize(new THREE.Vector3());
+  controls.target.set(0, c.y, 0);
+  const dir = camera.position.clone().sub(controls.target).normalize(), dist = Math.max(4.4, sz.y * 2.3);
+  camera.position.copy(controls.target).addScaledVector(dir, dist); controls.update();
+}
+let WEB = null;
+function setWeb(P){   // a linha de teia da pose pendurada: sobe a partir do ponto dado (as mãos) até sair da tela
+  if(WEB){ scene.remove(WEB); WEB.geometry.dispose(); WEB = null; }
+  if(!P) return;
+  const L = 12;
+  WEB = new THREE.Mesh(new THREE.CylinderGeometry(.006, .006, L, 6), new THREE.MeshBasicMaterial({color: 0xe8ecf5}));
+  WEB.position.set(P.x, P.y + L / 2, P.z); scene.add(WEB);
+}
+function setPose(name, save){
+  POSE_NOW = name;
+  if(RIG){
+    const p = (RIG.poses || window.POSES)[name] || {};
+    RIG.apply(p);
+    let wp = null;   // de onde sai a teia: um ponto preso a um osso, ou o meio de vários (ex.: entre os dois pés)
+    if(p.web && p.web.grip && RIG.grip){   // segura com as mãos: a linha passa pelas pegadas e sobe a partir da mais baixa
+      const g = p.web.grip.map(sd => RIG.grip(sd));
+      wp = new THREE.Vector3(g.reduce((s, v) => s + v.x, 0) / g.length, Math.min(...g.map(v => v.y)), g.reduce((s, v) => s + v.z, 0) / g.length);
+    } else if(p.web && p.web.mid){
+      wp = new THREE.Vector3();
+      p.web.mid.forEach(([b, at]) => wp.add(RIG.point(b, at || RIG.bonePos(b).toArray())));
+      wp.multiplyScalar(1 / p.web.mid.length);
+    } else if(p.web) wp = RIG.point(p.web.bone, p.web.at);
+    setWeb(wp); frameModel();
+  }
+  [...$('poses').children].forEach(b => b.setAttribute('aria-checked', b.dataset.pose === name));
+  if(save && api) api.set_flag('pose', name);
+}
+const POSE_ICONS = {   // bonequinhos: em pé (padrão) e pendurado de cabeça para baixo segurando a teia
+  crossed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.2" r="2.2"/><path d="M12 6.8v7.4M7.8 9.6l4.2.6 4.2-.6M7.8 9.6l1.2 3.2M16.2 9.6l-1.2 3.2M12 14.2l-3 6.8M12 14.2l3 6.8"/></svg>',
+  hanging: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 0.3v3" stroke-width="1.4"/><path d="M12 3.3L7.7 6.6 12 9.8M12 3.3l4.3 3.3L12 9.8M12 9.8v6.4M12 14.2l-5.2 4.2M12 14.2l5.2 4.2"/><circle cx="12" cy="19.4" r="2.2"/></svg>'
+};
+function renderPoses(){
+  const box = $('poses'); box.innerHTML = '';
+  ['crossed', 'hanging'].forEach(n => {   // a T-pose segue existindo só para as miniaturas
+    const b = document.createElement('button'); b.dataset.pose = n; b.innerHTML = POSE_ICONS[n];
+    b.setAttribute('role', 'radio'); b.setAttribute('aria-label', t('pose_' + n)); b.dataset.tip = t('pose_' + n);
+    b.setAttribute('aria-checked', n === POSE_NOW); b.onclick = () => setPose(n, true); box.appendChild(b);
+  });
+}
+let modelWatch = null;
+var LAST_GA = null;
+function showModelStatus(st){   // aviso no meio da tela enquanto o modelo é lido da cópia do jogo
+  LAST_GA = st;
+  const p = $('emptytext');
+  if(st && st.state === 'working') p.textContent = t('ga_working', {p: st.pct});
+  else if(st && st.state === 'error') p.textContent = t('ga_error', {e: st.error});
+  else p.textContent = t('empty_text');
+}
+function watchModel(){          // pergunta ao Python a cada 0,8 s; quando terminar, carrega o boneco
+  if(modelWatch) return;
+  modelWatch = setInterval(async () => {
+    let st; try { st = await api.get_model_status(); } catch(e){ return; }
+    showModelStatus(st);
+    if(st.state !== 'working'){ clearInterval(modelWatch); modelWatch = null; if(st.state === 'done') initModel(); }
+  }, 800);
+}
+async function initModel(){
+  if(!api || MODEL) return;
+  const m = await api.get_model();
+  $('emptymodel').hidden = !!m; document.querySelector('.suits').hidden = !m;   // sem modelo, o painel de trajes/poses não tem o que mostrar
+  if(!m){
+    $('suitnote').textContent = t('model_missing');
+    let st = null; try { st = await api.get_model_status(); } catch(e){}
+    showModelStatus(st);
+    if(st && st.state === 'working') watchModel();
+    return;
+  }
+  const g = new THREE.OBJLoader().parse(m.obj);
+  g.traverse(o => { if(o.isMesh){ o.material = [0, 1].map(() => new THREE.MeshStandardMaterial({roughness:.55, metalness:0})); MESHMATS = o.material; MESH = o; } });
+  scene.add(g); MODEL = g; ORIG = m.original; ORIGN = m.normals; MODEL_OBJ = m.obj;
+  RIG = null;
+  if(m.skel && window.GameRig){   // esqueleto real do jogo; se algo falhar, volta para o esqueleto automático
+    try {
+      RIG = new GameRig(MESH.geometry, m.obj, m.skel);
+      if(m.game_poses) RIG.useGamePoses(m.game_poses);   // poses das animações originais do jogo
+    } catch(e){ console.warn('esqueleto do jogo falhou:', e); RIG = null; }
+  }
+  if(!RIG) RIG = new PoseRig(MESH.geometry);
+  setPose(POSE_NOW, false); renderSuitPanel();   // redesenha o painel (troca o aviso "modelo não encontrado") e aplica o traje
+  renderTiles(); queueThumbs();
+}
+function skinSuit(name){ return PREV.suits[name] || null; }
+async function applySuit(){
+  renderSuitToggle();   // a pílula da aba Trajes acompanha qualquer troca de traje
+  [...$('suitlist').children].forEach((b, j) => b.setAttribute('aria-pressed', j === activeSuit));
+  renderExtras();
+  if(!MESHMATS || !ORIG) return;
+  const name = SUITNAMES[activeSuit], sk = skinSuit(name) || {}, my = ++applyToken;
+  const on = ORIGN && ORIGN[name];   // só o traje vermelho tem relevo (o original do jogo; o das skins não é confiável)
+  const [d0, d1, n0, n1] = await Promise.all([
+    loadTex(sk.upper || ORIG[name].upper, true), loadTex(sk.lower || ORIG[name].lower, true),
+    on ? loadTex(on.upper, false) : null, on ? loadTex(on.lower, false) : null]);
+  if(my !== applyToken) return;
+  [[0, d0, n0], [1, d1, n1]].forEach(([i, d, n]) => {
+    const m = MESHMATS[i]; m.map = d; m.normalMap = n; m.normalScale = new THREE.Vector2(1, -1); m.needsUpdate = true;
+  });
+}
+function renderExtras(){
+  const box = $('extras'), ex = PREV.extras[SUITNAMES[activeSuit]];
+  if(!ex || !ex.items.length){ box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false; box.innerHTML = '';
+  const ttl = document.createElement('h3'); ttl.textContent = t('extras_title') + ex.skin; box.appendChild(ttl);
+  const grid = document.createElement('div'); grid.className = 'grid2';
+  ex.items.forEach(it => {
+    const f = document.createElement('figure'), im = document.createElement('img'), c = document.createElement('figcaption');
+    im.src = it.uri; c.textContent = it.hash + ' · ' + it.size; f.append(im, c); grid.appendChild(f);
+  });
+  box.appendChild(grid);
+}
+function renderSuitToggle(){
+  const b = $('suittoggle'); b.dataset.suit = activeSuit;
+  $('suittoggle-l').textContent = t('suit_' + SUITNAMES[activeSuit]); b.title = t('suit_toggle');
+}
+$('suittoggle').onclick = () => { activeSuit = 1 - activeSuit; renderSuitPanel(); applySuit(); };
+function renderSuitPanel(){
+  renderSuitToggle();
+  const list = $('suitlist'); list.innerHTML = '';
+  const any = SUITNAMES.some(n => skinSuit(n)) || SUITNAMES.some(n => PREV.extras[n]);
+  $('suithead').textContent = any ? t('head_skins') : t('head_orig');
+  $('suitnote').textContent = any ? t('note_skins') : t('note_none');
+  SUITNAMES.forEach((n, i) => {
+    const b = document.createElement('button'); b.className = 'suit';
+    const tl = document.createElement('span'); tl.textContent = t('suit_' + n);
+    const s = document.createElement('small');
+    const ex = PREV.extras[n];
+    s.textContent = skinSuit(n) ? skinSuit(n).skin : (ex ? ex.skin + ' (' + t('other_model') + ')' : t('original'));
+    b.append(tl, s);
+    b.onclick = () => { activeSuit = i; applySuit(); };
+    list.appendChild(b);
+  });
+  applySuit();
+}
+async function refreshPreview(){ if(!api) return; PREV = await api.get_previews(); renderSuitPanel(); }
+renderSuitPanel();
+
+function resize(){
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(canvas); resize();
+
+/* fundo: o vermelho sendo tomado pelo preto do Venom (desenhado no tamanho exato do palco, sempre igual) */
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function tendril(x, px, py, ang, len, w, R, depth){
+  const steps = Math.max(10, Math.round(len / 5)), L = [], Rt = [];
+  let a = ang, k = (R() - .5) * 0.05;
+  for(let s = 0; s <= steps; s++){
+    const t = s / steps, ww = w * Math.pow(1 - t, 1.15) + 0.4;
+    const nx = -Math.sin(a), ny = Math.cos(a);
+    L.push([px + nx * ww, py + ny * ww]); Rt.push([px - nx * ww, py - ny * ww]);
+    k += (R() - .5) * 0.05; k = Math.max(-0.12, Math.min(0.12, k)); a += k;
+    px += Math.cos(a) * len / steps; py += Math.sin(a) * len / steps;
+    if(depth < 2 && s > steps * .25 && s < steps * .8 && R() < 0.07)
+      tendril(x, px, py, a + (R() < .5 ? -1 : 1) * (0.45 + R() * 0.6), len * (0.3 + R() * 0.35), ww * 0.85, R, depth + 1);
+  }
+  x.beginPath(); x.moveTo(L[0][0], L[0][1]);
+  L.forEach(p => x.lineTo(p[0], p[1])); Rt.reverse().forEach(p => x.lineTo(p[0], p[1]));
+  x.closePath(); x.fill();
+}
+function drawVenom(){
+  const st = $('stage'), cv = $('venom'), W = st.clientWidth, H = st.clientHeight, d = window.devicePixelRatio || 1;
+  if(!W || !H) return;
+  cv.width = Math.round(W * d); cv.height = Math.round(H * d);
+  const x = cv.getContext('2d'); x.setTransform(d, 0, 0, d, 0, 0); x.clearRect(0, 0, W, H);
+  const R = rng(1987), edge = y => W * (0.17 + 0.045 * Math.sin(y / H * 4.7 + .6) + 0.02 * Math.sin(y / H * 12.3 + 2.1));
+  x.fillStyle = '#050304';
+  x.beginPath(); x.moveTo(0, 0);
+  for(let y = 0; y <= H + 6; y += 5) x.lineTo(edge(y) + (R() - .5) * 5, y);
+  x.lineTo(0, H); x.closePath(); x.fill();
+  const n = Math.max(10, Math.round(H / 30));
+  for(let i = 0; i < n; i++){
+    const y = (i + R() * .9) / n * H;
+    tendril(x, edge(y) - 8, y, (R() - .55) * 0.9, W * (0.08 + R() * 0.2) + 30, 8 + R() * 9, R, 0);
+  }
+}
+let venomT = 0;
+new ResizeObserver(() => { clearTimeout(venomT); venomT = setTimeout(drawVenom, 60); }).observe($('stage'));
+drawVenom();
+let GAME_ON = false, LOOP_ON = false;
+function loop(){
+  if(GAME_ON || document.hidden){ LOOP_ON = false; return; }   // o jogo aberto fica com a placa de vídeo só para ele
+  LOOP_ON = true; controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop);
+}
+const wakeLoop = () => { if(!LOOP_ON && !GAME_ON && !document.hidden) loop(); };
+document.addEventListener('visibilitychange', wakeLoop);
+window.onGameRunning = on => { GAME_ON = !!on; if(!on){ wakeLoop(); queueThumbs(); } };
+loop();
+
+/* ---------- Opções (grava no Config.xml do jogo) ---------- */
+const KT = {};
+const row = (codes, start) => codes.forEach((c,i) => KT[c] = [start+i, c.replace('Key','').replace('Digit','')]);
+row(['1','2','3','4','5','6','7','8','9','0'].map(x=>'Digit'+x), 2);
+row([...'QWERTYUIOP'].map(x=>'Key'+x), 16);
+row([...'ASDFGHJKL'].map(x=>'Key'+x), 30);
+row([...'ZXCVBNM'].map(x=>'Key'+x), 44);
+row(['F1','F2','F3','F4','F5','F6','F7','F8','F9','F10'], 59);
+Object.assign(KT,{Minus:[12,'-'],Equal:[13,'='],Backspace:[14,'Backspace'],Tab:[15,'Tab'],BracketLeft:[26,'['],BracketRight:[27,']'],Enter:[28,'Enter'],ControlLeft:[29,'Ctrl'],Semicolon:[39,';'],Quote:[40,"'"],Backquote:[41,'`'],ShiftLeft:[42,'Shift'],Backslash:[43,'\\'],Comma:[51,','],Period:[52,'.'],Slash:[53,'/'],ShiftRight:[54,'R-Shift'],AltLeft:[56,'Alt'],Space:[57,'Space'],CapsLock:[58,'Caps Lock'],F11:[87,'F11'],F12:[88,'F12'],ControlRight:[157,'R-Ctrl'],AltRight:[184,'R-Alt'],Home:[199,'Home'],ArrowUp:[200,'Up'],PageUp:[201,'Page Up'],ArrowLeft:[203,'Left'],ArrowRight:[205,'Right'],End:[207,'End'],ArrowDown:[208,'Down'],PageDown:[209,'Page Down'],Insert:[210,'Insert'],Delete:[211,'Delete']});
+const NAMES = {};
+Object.values(KT).forEach(([d,l]) => NAMES[256+d] = l);
+// o jogo lê os 8 botões do mouse (DirectInput): 524 esquerdo, 525 direito, 526 meio, 527/528 laterais, 529–531 extras
+const keyName = v => (+v >= 524 && +v <= 531 ? (+v <= 528 ? t('mouse_' + v) : t('mouse_n', {n: +v - 523})) : (NAMES[v] || t('code_n', {n: v})));
+
+const BINDS = {
+  mov:['ActionLeft','ActionRight','ActionForward','ActionBackward','ActionWallCrawl','ActionWallSprint','ActionSwing','ActionJump','ActionCenterCamera'],
+  com:['ActionSuit','ActionTarget','ActionShoot','ActionAttack','ActionWebStrike','ActionUpgrades','ActionAllyPrev','ActionAllyNext','ActionAllySummon','ActionAllyDismiss']
+};
+const CHECKS = ['VideoVSync','VideoShadows','VideoParticles','VideoPostProcFx'];
+let opt = {}, defs = {}, dirty = false, listening = null;
+const omsg = t => $('omsg').textContent = t;
+
+function bindBtn(id){
+  const b = document.createElement('button'); b.className = 'key'; b.dataset.id = id;
+  b.textContent = keyName(opt[id]);
+  b.onclick = () => startListen(b);
+  return b;
+}
+function startListen(b){
+  if(listening) stopListen();
+  listening = b; b.classList.add('wait'); b.textContent = t('press_key');
+  window.addEventListener('keydown', onKey, true); window.addEventListener('mousedown', onMouse, true);
+}
+function stopListen(){
+  if(!listening) return;
+  listening.classList.remove('wait'); listening.textContent = keyName(opt[listening.dataset.id]);
+  window.removeEventListener('keydown', onKey, true); window.removeEventListener('mousedown', onMouse, true);
+  listening = null;
+}
+function assign(v){ opt[listening.dataset.id] = String(v); dirty = true; omsg(''); stopListen(); }
+function onKey(e){
+  e.preventDefault(); e.stopPropagation();
+  if(e.code === 'Escape') return stopListen();
+  const k = KT[e.code]; if(k) assign(256 + k[0]); else omsg(t('key_bad'));
+}
+function onMouse(e){
+  e.preventDefault(); e.stopPropagation();
+  const m = {0:524, 2:525, 1:526, 3:527, 4:528}[e.button]; if(m) assign(m);   // 3 = lateral "voltar", 4 = lateral "avançar"
+}
+// os botões laterais do mouse fazem o navegador "voltar/avançar": aqui isso nunca deve acontecer
+['mousedown', 'mouseup', 'auxclick'].forEach(n => window.addEventListener(n, e => { if(e.button === 3 || e.button === 4) e.preventDefault(); }, true));
+
+function buildOptions(data){
+  opt = {...data.values}; defs = data.defaults;
+  ['mov','com'].forEach(g => {
+    const box = $('tab-'+g); box.innerHTML = '';
+    BINDS[g].forEach(id => {
+      const l = document.createElement('label'); l.textContent = t('b_' + id); box.append(l, bindBtn(id));
+    });
+  });
+  const mov = $('tab-mov');
+  const sl = document.createElement('label'); sl.textContent = t('sens', {v: opt.MouseSens}); sl.id = 'senslabel';
+  const rg = document.createElement('input'); rg.type = 'range'; rg.min = 0; rg.max = 100; rg.value = opt.MouseSens;
+  rg.oninput = () => { opt.MouseSens = rg.value; sl.textContent = t('sens', {v: rg.value}); dirty = true; };
+  mov.append(sl, rg);
+  const sel = $('res'); sel.innerHTML = '';
+  const cur = opt.VideoW + 'x' + opt.VideoH;
+  const list = data.resolutions.includes(cur) ? data.resolutions : [...data.resolutions, cur];
+  list.forEach(r => { const o = document.createElement('option'); o.value = o.textContent = r.replace('x',' x '); o.dataset.r = r; if(r === cur) o.selected = true; sel.appendChild(o); });
+  sel.onchange = () => { const [w,h] = sel.selectedOptions[0].dataset.r.split('x'); opt.VideoW = w; opt.VideoH = h; dirty = true; };
+  const cb = $('checks'); cb.innerHTML = '';
+  CHECKS.forEach(id => {
+    const d = document.createElement('label'); d.className = 'chk';
+    const i = document.createElement('input'); i.type = 'checkbox'; i.checked = opt[id] === '1';
+    i.onchange = () => { opt[id] = i.checked ? '1' : '0'; dirty = true; };
+    d.append(i, t('c_' + id)); cb.appendChild(d);
+  });
+}
+async function saveOpts(){
+  if(!api) return {ok:false};
+  if(padDirty){ const p = await api.set_pad_map(pad.map); if(!p.ok){ omsg(p.msg); return p; } padDirty = false; }
+  const r = await api.save_options(opt); omsg(r.msg); if(r.ok) dirty = false; return r;
+}
+async function loadOpts(){ if(api){ LASTOPT = await api.get_options(); buildOptions(LASTOPT); } }
+
+/* ---------- Controles (Gamepad) ---------- */
+const PAD_MOV = ['ActionWallCrawl','ActionWallSprint','ActionSwing','ActionJump','ActionCenterCamera'];
+const PAD_COM = ['ActionSuit','ActionTarget','ActionShoot','ActionAttack','ActionWebStrike','ActionUpgrades','ActionAllyPrev','ActionAllyNext','ActionAllySummon','ActionAllyDismiss'];
+let pad = {connected: false, map: {}, defaults: {}}, padDirty = false, padListen = null, padTimer = null, padWatch = null;
+async function loadPad(){
+  if(!api) return;
+  const keep = padDirty ? pad.map : null;
+  pad = await api.get_pad(); if(keep) pad.map = keep;
+  renderPad();
+  stopPadWatch(); padWatch = setInterval(async () => {   // conectou/desconectou com a aba aberta
+    const p = await api.poll_pad(); if(p.connected !== pad.connected){ pad.connected = p.connected; renderPad(); }
+  }, 1500);
+}
+function stopPadWatch(){ clearInterval(padWatch); padWatch = null; stopPadListen(); }
+function padBtn(a){
+  const b = document.createElement('button'); b.className = 'key'; b.dataset.pad = a;
+  b.textContent = t('pad_' + pad.map[a]); b.onclick = () => startPadListen(b); return b;
+}
+function renderPad(){
+  $('padstat').textContent = pad.connected ? t('pad_on') : t('pad_off');
+  $('padstat').classList.toggle('on', pad.connected);
+  $('padbody').hidden = !pad.connected;
+  [['pad-mov', PAD_MOV], ['pad-com', PAD_COM]].forEach(([id, list]) => {
+    const box = $(id); box.innerHTML = '';
+    if(id === 'pad-mov'){   // mover é o analógico (não muda)
+      const l = document.createElement('label'); l.textContent = t('pad_move');
+      const f = document.createElement('button'); f.className = 'key fixed'; f.disabled = true; f.textContent = t('pad_LSTICK');
+      box.append(l, f);
+    }
+    list.forEach(a => { const l = document.createElement('label'); l.textContent = t('b_' + a); box.append(l, padBtn(a)); });
+  });
+}
+function stopPadListen(){
+  clearInterval(padTimer); padTimer = null;
+  if(padListen){ padListen.classList.remove('wait'); padListen.textContent = t('pad_' + pad.map[padListen.dataset.pad]); padListen = null; }
+  window.removeEventListener('keydown', padEsc, true);
+}
+function padEsc(e){ if(e.key === 'Escape'){ e.preventDefault(); stopPadListen(); } }
+function startPadListen(b){
+  stopPadListen(); padListen = b; b.classList.add('wait'); b.textContent = t('pad_wait');
+  window.addEventListener('keydown', padEsc, true);
+  let armed = false, started = Date.now();
+  padTimer = setInterval(async () => {
+    if(!padListen) return;
+    if(Date.now() - started > 10000) return stopPadListen();
+    const p = await api.poll_pad(); if(!padListen) return;
+    const press = p.pressed.filter(x => x !== 'START');
+    if(!armed){ if(!press.length) armed = true; return; }   // espera soltar tudo antes de ouvir
+    if(!press.length) return;
+    const a = padListen.dataset.pad, nb = press[0];
+    const other = Object.keys(pad.map).find(k => k !== a && pad.map[k] === nb);
+    if(other) pad.map[other] = pad.map[a];                  // botão já usado: as duas ações trocam de lugar
+    pad.map[a] = nb; padDirty = dirty = true; omsg('');
+    padListen = null; stopPadListen(); renderPad();
+  }, 80);
+}
+
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b));
+  ['keys','pad','vid','launcher','about'].forEach(n => $('tab-'+n).hidden = n !== b.dataset.tab);
+  if(b.dataset.tab === 'pad') loadPad(); else stopPadWatch();
+  $('bar').hidden = ['launcher','about'].includes(b.dataset.tab);   // Salvar/Restaurar valem só para as opções do jogo
+  if(b.dataset.tab === 'about') renderInfo();
+});
+function showView(name){   // 'play' | 'suits' | 'opt'
+  $('options').hidden = name !== 'opt';
+  $('suitsview').hidden = name !== 'suits';
+  document.querySelector('main').classList.toggle('suitsmode', name === 'suits');
+  ['play', 'suits', 'opt'].forEach(n => $('nav-' + n).setAttribute('aria-pressed', n === name));
+  if(name === 'suits'){ renderTiles(); queueThumbs(); }
+}
+$('nav-play').onclick = () => showView('play');
+$('nav-suits').onclick = () => showView('suits');
+$('nav-opt').onclick = () => { showView('opt'); loadOpts(); };
+$('save').onclick = saveOpts;
+$('defs').onclick = () => {
+  if(!$('tab-pad').hidden){ pad.map = {...pad.defaults}; padDirty = dirty = true; renderPad(); omsg(t('defaults_restored')); return; } buildOptions({values:{...defs}, defaults:defs, resolutions:[...$('res').options].map(o=>o.dataset.r)}); dirty = true; omsg(t('defaults_restored')); };
+// ao jogar, salva antes se tiver mudança pendente
+const _play = $('play').onclick;
+$('play').onclick = async () => { if(dirty) await saveOpts(); await _play(); };
+
+/* ---------- Skins e aba Trajes ---------- */
+let GROUPS_DATA = [], ORIG_THUMBS = {}, thumbRunning = false, thumbAgain = false, skinTimer = null, MODEL_OBJ = null, THUMB = null;
+const THUMB_FAILED = new Set(), THUMB_DONE = new Map();
+const canThumb = gid => gid === 'outros' || !!MODEL_OBJ;
+const thumbOf = (gid, s) => s.thumb || THUMB_DONE.get(gid + '/' + s.file) || null;
+const selName = g => { const s = g && g.skins.find(x => x.active); return s ? s.name : null; };
+
+function makeTile(o){
+  const d = document.createElement('div');
+  d.className = 'tile' + (o.locked ? ' locked' : ''); d.setAttribute('role', 'button'); d.tabIndex = o.locked ? -1 : 0;
+  d.setAttribute('aria-pressed', !!o.active); if(o.locked) d.setAttribute('aria-disabled', 'true'); if(o.tip) d.title = o.tip;
+  const ph = document.createElement('div'); ph.className = 'ph' + (o.imgs && o.imgs.length > 1 ? ' multi' : '');
+  if(o.imgs && o.imgs.length) o.imgs.forEach(src => { const im = document.createElement('img'); im.src = src; im.alt = ''; ph.appendChild(im); });
+  else { const w = document.createElement('div'); if(o.spin) w.className = 'spin'; else { w.className = 'none'; w.textContent = o.symbol || '—'; } ph.appendChild(w); }
+  const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = o.name; nm.title = o.name + (o.sub ? ' —' + o.sub : '');
+  d.append(ph, nm);
+  if(o.prep){ const p = document.createElement('div'); p.className = 'spin prep'; d.appendChild(p); }
+  if(o.badge){ const b = document.createElement('span'); b.className = 'badge'; b.textContent = o.badge; d.appendChild(b); }
+  if(o.onremove){ const x = document.createElement('button'); x.className = 'x'; x.textContent = '×'; x.title = t('remove_tip');
+    x.onclick = e => { e.stopPropagation(); o.onremove(); }; d.appendChild(x); }
+  if(!o.locked){ d.onclick = o.onclick; d.onkeydown = e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); o.onclick(); } }; }
+  return d;
+}
+
+function renderTiles(){
+  const box = $('tiles'); box.innerHTML = '';
+  if(!GROUPS_DATA.length){ box.textContent = t('put_skins'); return; }
+  GROUPS_DATA.forEach(g => {
+    const sec = document.createElement('div'); sec.className = 'tgroup';
+    const h3 = document.createElement('h3'); h3.textContent = t('grp_' + g.id) + (g.locked ? ' — ' + t('locked_short') : ''); sec.appendChild(h3);
+    const grid = document.createElement('div'); grid.className = 'tgrid' + (g.id === 'dual' ? ' wide' : '');
+    const origs = g.id === 'vermelho' ? ['Clássico'] : g.id === 'preto' ? ['Negro'] : g.id === 'dual' ? ['Clássico', 'Negro'] : [];
+    const have = origs.map(n => ORIG_THUMBS[n]).filter(Boolean);
+    const lockTip = g.locked ? t('locked_tip') : '';
+    grid.appendChild(makeTile({
+      name: g.id === 'outros' ? t('none_cap') : t('original_cap'), active: !g.skins.some(s => s.active), locked: g.locked, tip: lockTip,
+      imgs: origs.length && have.length === origs.length ? have : [], spin: origs.length > 0 && !!MODEL_OBJ && have.length !== origs.length, symbol: '∅',
+      onclick: () => pickSkin(g.id, '')
+    }));
+    g.skins.forEach(s => {
+      const id = g.id + '/' + s.file, img = thumbOf(g.id, s);
+      grid.appendChild(makeTile({
+        name: s.name + (s.status.startsWith('erro') ? ' (!)' : ''), sub: s.status === 'preparando' ? t('preparing') : '', prep: s.status === 'preparando',
+        active: s.active, locked: g.locked, tip: lockTip,
+        imgs: img ? [img] : [], spin: !img && !THUMB_FAILED.has(id) && canThumb(g.id), symbol: '?',
+        onclick: () => pickSkin(g.id, s.file), onremove: () => removeSkin(g.id, s)
+      }));
+    });
+    sec.appendChild(grid); box.appendChild(sec);
+  });
+}
+
+async function pickSkin(gid, file){
+  if(!api) return;
+  GROUPS_DATA = await api.set_active(gid, file);
+  if(gid === 'vermelho') activeSuit = 0; else if(gid === 'preto') activeSuit = 1;
+  afterSkinsChanged();
+}
+async function removeSkin(gid, s){
+  if(!api || !confirm(t('confirm_remove', {name: s.name}))) return;
+  GROUPS_DATA = await api.remove_skin(gid, s.file);
+  afterSkinsChanged();
+}
+function afterSkinsChanged(){
+  renderTiles();
+  const key = GROUPS_DATA.map(g => g.skins.filter(s => s.active).map(s => g.id + ':' + s.file)).flat().join('|');
+  if(key !== prevKey){ prevKey = key; refreshPreview(); }
+  clearTimeout(skinTimer);
+  if(GROUPS_DATA.some(g => g.skins.some(s => s.status === 'preparando'))) skinTimer = setTimeout(loadSkins, 2000);
+}
+async function loadSkins(){
+  if(!api) return;
+  GROUPS_DATA = await api.get_skins();
+  afterSkinsChanged(); queueThumbs();
+}
+
+/* importar skins (arrastar e soltar ou botão) */
+function handleImport(res){
+  if(!res) return;
+  GROUPS_DATA = res.skins;
+  const msgs = res.results.map(r => r.msg);
+  $('svmsg').textContent = msgs.join('  ·  '); if(msgs.length) say(msgs[msgs.length - 1]);
+  afterSkinsChanged(); queueThumbs();
+}
+$('addskin').onclick = async () => { if(api) handleImport(await api.add_skin_dialog()); };
+window.onSkinsImported = res => { showDrop(false); showView('suits'); handleImport(res); };
+const hasFiles = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files');
+let lastOver = 0;
+const showDrop = on => { $('dropzone').hidden = !on; };
+// em fase de captura: o pywebview trata o "soltar" e interrompe a propagação, então escutamos antes dele
+window.addEventListener('dragenter', e => { if(hasFiles(e)){ lastOver = Date.now(); showDrop(true); } }, true);
+window.addEventListener('dragover', e => { e.preventDefault(); if(hasFiles(e)){ lastOver = Date.now(); if($('dropzone').hidden) showDrop(true); } }, true);
+window.addEventListener('drop', e => { e.preventDefault(); showDrop(false); }, true);
+window.addEventListener('dragend', () => showDrop(false), true);
+window.addEventListener('dragleave', e => { if(!e.relatedTarget) showDrop(false); }, true);
+['mousemove', 'pointerdown', 'keydown'].forEach(n => window.addEventListener(n, () => { if(!$('dropzone').hidden) showDrop(false); }, true));
+setInterval(() => { if(!$('dropzone').hidden && Date.now() - lastOver > 700) showDrop(false); }, 300);   // rede de segurança
+
+/* miniaturas: o próprio modelo, em T-pose, com as texturas da skin (guardadas em disco depois da primeira vez) */
+function ensureThumb(){
+  if(THUMB || !MODEL_OBJ) return THUMB;
+  const c = document.createElement('canvas');
+  const r = new THREE.WebGLRenderer({canvas: c, antialias: true, alpha: true, preserveDrawingBuffer: true});
+  r.outputEncoding = THREE.sRGBEncoding; r.setSize(200, 260, false); r.setClearColor(0x000000, 0);
+  const sc = new THREE.Scene();
+  sc.add(new THREE.HemisphereLight(0xdfe6ff, 0x40404c, 0.95));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.9); dl.position.set(-2, 3, 4); sc.add(dl);
+  const g = new THREE.OBJLoader().parse(MODEL_OBJ); let mats = null;
+  g.traverse(o => { if(o.isMesh){ o.material = [0, 1].map(() => new THREE.MeshStandardMaterial({roughness: .55, metalness: 0})); mats = o.material; } });
+  sc.add(g);
+  const cam = new THREE.PerspectiveCamera(28, 200 / 260, .1, 50); cam.position.set(0, .95, 4.5); cam.lookAt(0, .95, 0);
+  THUMB = {r, sc, cam, mats, c};
+  return THUMB;
+}
+function suitSpec(name, e){
+  e = e || {};
+  const on = ORIGN && ORIGN[name];
+  return {upper: e.upper || ORIG[name].upper, lower: e.lower || ORIG[name].lower, nupper: on ? on.upper : null, nlower: on ? on.lower : null};
+}
+async function drawSpec(spec){
+  const T = ensureThumb(); if(!T || !ORIG) return null;
+  const [d0, d1, n0, n1] = await Promise.all([loadTex(spec.upper, true), loadTex(spec.lower, true),
+    spec.nupper ? loadTex(spec.nupper, false) : null, spec.nlower ? loadTex(spec.nlower, false) : null]);
+  [[0, d0, n0], [1, d1, n1]].forEach(([i, d, n]) => {
+    const m = T.mats[i]; if(m.map) m.map.dispose(); if(m.normalMap) m.normalMap.dispose();
+    m.map = d; m.normalMap = n; m.normalScale = new THREE.Vector2(1, -1); m.needsUpdate = true;
+  });
+  T.r.render(T.sc, T.cam);
+  const cv = document.createElement('canvas'); cv.width = 200; cv.height = 260; cv.getContext('2d').drawImage(T.c, 0, 0);
+  return cv;
+}
+function sideBySide(a, b){
+  const cv = document.createElement('canvas'); cv.width = 400; cv.height = 260;
+  const x = cv.getContext('2d'); x.drawImage(a, 0, 0); x.drawImage(b, 200, 0); return cv;
+}
+function mosaic(uris){   // skins de outro modelo: até 4 texturas em grade 2x2
+  return Promise.all(uris.map(u => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = u; }))).then(ims => {
+    const cv = document.createElement('canvas'); cv.width = 200; cv.height = 260;
+    const x = cv.getContext('2d'); x.fillStyle = '#0e1124'; x.fillRect(0, 0, 200, 260);
+    ims.forEach((im, i) => { if(!im) return; const cw = 100, ch = 130, k = Math.min(cw / im.width, ch / im.height), w = im.width * k, hh = im.height * k;
+      x.drawImage(im, (i % 2) * cw + (cw - w) / 2, Math.floor(i / 2) * ch + (ch - hh) / 2, w, hh); });
+    return cv;
+  });
+}
+async function thumbForSkin(gid, data){
+  if(!data) return null;
+  if(gid === 'outros') return data.extras.length ? await mosaic(data.extras.slice(0, 4).map(e => e.uri)) : null;
+  const by = n => data.suits.find(s => s.suit === n);
+  if(gid === 'dual'){ const a = await drawSpec(suitSpec('Clássico', by('Clássico'))), b = await drawSpec(suitSpec('Negro', by('Negro'))); return a && b ? sideBySide(a, b) : null; }
+  const name = gid === 'vermelho' ? 'Clássico' : 'Negro';
+  return await drawSpec(suitSpec(name, by(name)));
+}
+function nextThumbJob(){
+  for(const g of GROUPS_DATA) for(const s of g.skins){
+    const id = g.id + '/' + s.file;
+    if(!thumbOf(g.id, s) && !THUMB_FAILED.has(id) && canThumb(g.id)) return [g, s];
+  }
+  return null;
+}
+async function queueThumbs(){
+  if(!api || GAME_ON) return;
+  if(thumbRunning){ thumbAgain = true; return; }
+  thumbRunning = true;
+  try{
+    if(MODEL_OBJ && ORIG){
+      const saved = await api.get_original_thumbs();
+      for(const name of SUITNAMES){
+        if(saved[name]){ ORIG_THUMBS[name] = saved[name]; continue; }
+        const cv = await drawSpec(suitSpec(name, null)); if(!cv) continue;
+        ORIG_THUMBS[name] = cv.toDataURL('image/png'); await api.save_original_thumb(name, ORIG_THUMBS[name]);
+      }
+      renderTiles();
+    }
+    for(let job = nextThumbJob(); job; job = nextThumbJob()){
+      const [g, s] = job, id = g.id + '/' + s.file;
+      let cv = null;
+      try { cv = await thumbForSkin(g.id, await api.get_skin_preview(g.id, s.file)); } catch(e){ cv = null; }
+      if(!cv){ THUMB_FAILED.add(id); renderTiles(); continue; }
+      const uri = cv.toDataURL('image/png'); THUMB_DONE.set(id, uri); await api.save_thumb(g.id, s.file, uri); renderTiles();
+    }
+  } finally { thumbRunning = false; if(thumbAgain){ thumbAgain = false; queueThumbs(); } }
+}
+$('openskins').onclick = () => api && api.open_skins_folder();
+$('skipintro').onchange = () => api && api.set_flag('skip_intro', $('skipintro').checked);
+// Modo 60 FPS estável: grava MaxCpuCount=4 no Config.xml (valor que resolveu o "arrastar"); desligado = padrão do jogo
+$('stable60').onchange = () => { if(api) api.set_cpu_cores($('stable60').checked ? 4 : 0); };
+
+/* ---------- Launcher: idioma, créditos e licenças ---------- */
+const pickL = o => (o && typeof o === 'object') ? (o[LANG] || o.pt || '') : (o || '');
+async function renderInfo(){
+  if(!api) return;
+  const info = await api.get_info();
+  $('appver').textContent = 'v' + info.version;
+  $('repobtn').hidden = !info.repo; $('repobtn').onclick = () => api.open_url(info.repo);
+  const box = $('creditslist'); box.innerHTML = '';
+  (info.credits || []).forEach(it => {
+    const d = document.createElement('div'); d.className = 'ab-card cred';
+    const b = document.createElement('b'); b.textContent = it.name; d.appendChild(b);
+    const p = document.createElement('p'); p.textContent = pickL(it.role); d.appendChild(p);
+    if(it.note){ const n = document.createElement('p'); n.className = 'ab-note'; n.textContent = pickL(it.note); d.appendChild(n); }
+    if(it.url){ const a = document.createElement('button'); a.className = 'mini'; a.textContent = t('open_link'); a.onclick = () => api.open_url(it.url); d.appendChild(a); }
+    box.appendChild(d);
+  });
+}
+async function showLicense(kind){
+  if(!api) return;
+  const r = await api.get_license(kind);
+  $('lictitle').textContent = t(kind === 'launcher' ? 'ab_lic_launcher_btn' : 'ab_lic_third_btn');
+  $('lictext').textContent = r.ok ? r.text : t('ab_lic_missing');
+  $('licview').hidden = false; $('lictext').scrollTop = 0; $('licclose').focus();
+}
+const closeLicense = () => { $('licview').hidden = true; };
+$('lic-launcher').onclick = () => showLicense('launcher');
+$('lic-third').onclick = () => showLicense('third');
+$('licclose').onclick = closeLicense;
+$('licview').onclick = e => { if(e.target === $('licview')) closeLicense(); };
+window.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('licview').hidden){ e.preventDefault(); closeLicense(); } });
+$('lang').onchange = async () => {
+  LANG = $('lang').value;
+  if(api) await api.set_language(LANG);
+  applyI18n();
+  if(LAST) render(LAST);
+  loadSkins(); renderSuitPanel(); renderPoses(); renderInfo();
+  if(LASTOPT) buildOptions({values: {...opt}, defaults: defs, resolutions: LASTOPT.resolutions});
+};
+</script>
+</body>
+</html>
