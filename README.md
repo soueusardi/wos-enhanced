@@ -1,4 +1,4 @@
-# Web of Shadows Launcher
+# Web of Shadows Enhanced
 
 An unofficial, free fan-made launcher for the PC version of **Spider-Man: Web of Shadows** (version 1.1.1.11540).
 
@@ -54,7 +54,7 @@ Full license information is also available in the launcher's **About** tab.
 
 ---
 
-# Web of Shadows Launcher
+# Web of Shadows Enhanced
 
 Launcher de fã, **não oficial e gratuito**, para a versão de PC de **Spider-Man: Web of Shadows** (versão 1.1.1.11540).
 
